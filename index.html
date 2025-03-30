@@ -1,0 +1,195 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimePahe API Frontend</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="navbar">
+        <div class="container">
+            <a href="/">AnimePahe API</a>
+        </div>
+    </div>
+
+    <div class="container" id="app">
+        <!-- Search page -->
+        <div id="search-page">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Search anime...">
+                <button onclick="searchAnime()">Search</button>
+            </div>
+            <div id="search-results"></div>
+        </div>
+
+        <!-- Anime details page -->
+        <div id="anime-page" style="display: none;">
+            <button onclick="showPage('search-page')">Back to Search</button>
+            <div id="anime-details"></div>
+            <div id="episodes-list"></div>
+            <div id="pagination"></div>
+        </div>
+
+        <!-- Download page -->
+        <div id="download-page" style="display: none;">
+            <button onclick="showPage('anime-page')">Back to Anime</button>
+            <div id="download-links"></div>
+        </div>
+    </div>
+
+    <script>
+        // app.js
+        let currentAnime = null;
+        let currentPage = 1;
+
+        async function searchAnime() {
+            const query = document.getElementById('search-input').value;
+            if (!query) return;
+
+            showLoading('search-results');
+            try {
+                const response = await fetch(`/search/${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError('search-results', data.error);
+                    return;
+                }
+
+                let html = `<div class="anime-grid">`;
+                data.results.forEach(anime => {
+                    html += `
+                        <div class="anime-card" onclick="showAnime('${anime.session_id}')">
+                            <img src="${anime.poster}" class="anime-poster" alt="${anime.title}">
+                            <div class="anime-info">
+                                <h3>${anime.title}</h3>
+                                <p>Episodes: ${anime.episodes}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                
+                document.getElementById('search-results').innerHTML = html;
+            } catch (error) {
+                showError('search-results', error.message);
+            }
+        }
+
+        async function showAnime(sessionId, page = 1) {
+            showLoading('anime-details');
+            currentPage = page;
+            
+            try {
+                // Get anime details
+                const animeResponse = await fetch(`/anime/${sessionId}`);
+                const animeData = await animeResponse.json();
+                
+                // Get episodes
+                const episodesResponse = await fetch(`/episodes/${sessionId}/${page}`);
+                const episodesData = await episodesResponse.json();
+
+                currentAnime = {
+                    ...animeData,
+                    episodes: episodesData
+                };
+
+                // Render anime details
+                let html = `
+                    <div class="anime-header">
+                        <img src="${animeData.poster}" style="max-width: 200px; float: left; margin-right: 2rem;">
+                        <h1>${animeData.title}</h1>
+                        ${animeData.japanese_title ? `<h3>${animeData.japanese_title}</h3>` : ''}
+                        <p>${animeData.synopsis}</p>
+                    </div>
+                `;
+                document.getElementById('anime-details').innerHTML = html;
+
+                // Render episodes
+                let episodesHtml = `<div class="episode-list">`;
+                episodesData.episodes.forEach(ep => {
+                    episodesHtml += `
+                        <div class="episode-card" onclick="showDownloads('${sessionId}', '${ep.session}')">
+                            <h4>Episode ${ep.episode}</h4>
+                            <p>${ep.title}</p>
+                        </div>
+                    `;
+                });
+                episodesHtml += `</div>`;
+                document.getElementById('episodes-list').innerHTML = episodesHtml;
+
+                // Render pagination
+                let paginationHtml = `<div class="pagination">`;
+                if (currentPage > 1) {
+                    paginationHtml += `<button onclick="showAnime('${sessionId}', ${currentPage - 1})">Previous</button>`;
+                }
+                if (currentPage < episodesData.total_pages) {
+                    paginationHtml += `<button onclick="showAnime('${sessionId}', ${currentPage + 1})">Next</button>`;
+                }
+                document.getElementById('pagination').innerHTML = paginationHtml;
+
+                showPage('anime-page');
+            } catch (error) {
+                showError('anime-details', error.message);
+            }
+        }
+
+        async function showDownloads(sessionId, episodeSession) {
+            showLoading('download-links');
+            try {
+                const response = await fetch(`/download/${sessionId}/${episodeSession}`);
+                const data = await response.json();
+                
+                let html = `<div class="download-links">`;
+                data.results.forEach(link => {
+                    html += `
+                        <div class="download-card">
+                            <h4>${link.quality}</h4>
+                            ${link.direct_url ? `
+                                <a href="${link.direct_url}" target="_blank" class="direct-link">Direct Download</a>
+                            ` : `
+                                <p class="error">Error: ${link.error}</p>
+                            `}
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                
+                document.getElementById('download-links').innerHTML = html;
+                showPage('download-page');
+            } catch (error) {
+                showError('download-links', error.message);
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('#app > div').forEach(div => {
+                div.style.display = 'none';
+            });
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        function showLoading(elementId) {
+            document.getElementById(elementId).innerHTML = `
+                <div class="loading">
+                    Loading...
+                </div>
+            `;
+        }
+
+        function showError(elementId, message) {
+            document.getElementById(elementId).innerHTML = `
+                <div class="error">
+                    Error: ${message}
+                </div>
+            `;
+        }
+
+        // Initial search on page load
+        window.onload = searchAnime;
+    </script>
+</body>
+</html>

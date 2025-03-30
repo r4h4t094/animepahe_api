@@ -294,9 +294,12 @@ def get_download_links(session_id, episode_session):
                 continue
             
             # Then get the final direct link
-            direct_link = get_dl_link(intermediate_link)      
+            try:
+                direct_link = get_dl_link(intermediate_link)
+            except:
+                direct_link = "null"
             
-            if not direct_link or direct_link.startswith('http'):
+            if not direct_link.startswith('http'):
                 results.append({
                     "quality": quality,
                     "kwik_url": kwik_url,

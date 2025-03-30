@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeFlix - Stream Anime for Free</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --dark-color: #2d3436;
+            --light-color: #f5f6fa;
+        }
+        
+        body {
+            background-color: #0f0f0f;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.8) !important;
+            backdrop-filter: blur(10px);
+        }
+        
+        .hero-section {
+            height: 70vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://i.imgur.com/9G3hY9J.jpg') no-repeat center center/cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .anime-card {
+            transition: transform 0.3s;
+            cursor: pointer;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .anime-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .anime-card img {
+            height: 300px;
+            object-fit: cover;
+            width: 100%;
+        }
+        
+        .anime-card .card-body {
+            padding: 15px;
+        }
+        
+        .anime-card .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .badge-episode {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .player-container {
+            background-color: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .episode-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .episode-item {
+            background-color: #1a1a1a;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .episode-item:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .search-box {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+        }
+        
+        .search-box:focus {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: none;
+        }
+        
+        .quality-btn {
+            background-color: #333;
+            color: white;
+            border: none;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .quality-btn:hover, .quality-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .back-button {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .back-button:hover {
+            color: var(--secondary-color);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#" onclick="showHomePage()">
+                <i class="bi bi-play-circle-fill me-2"></i>AnimeFlix
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showHomePage()">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPopularAnime()">Popular</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <input class="form-control me-2 search-box" type="search" placeholder="Search anime..." id="searchInput">
+                    <button class="btn btn-outline-light" onclick="searchAnime()">Search</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid p-0" id="mainContent">
+        <!-- Hero Section -->
+        <div class="hero-section" id="heroSection">
+            <div class="container">
+                <h1 class="display-4 fw-bold mb-4">Unlimited Anime Streaming</h1>
+                <p class="lead mb-4">Watch your favorite anime anytime, anywhere in HD quality</p>
+                <div class="d-flex justify-content-center">
+                    <input class="form-control form-control-lg w-50 search-box" type="search" placeholder="Search anime..." id="heroSearchInput">
+                    <button class="btn btn-primary btn-lg ms-2" onclick="searchAnime()">Search</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anime List Section -->
+        <div class="container py-5" id="animeListSection">
+            <h2 class="mb-4">Popular Anime</h2>
+            <div class="row" id="animeList">
+                <!-- Anime cards will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="loader"></div>
+                    <p>Loading anime...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anime Details Modal -->
+    <div class="modal fade" id="animeDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="animeTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img id="animePoster" class="img-fluid rounded mb-3" src="" alt="">
+                            <div class="mb-3">
+                                <h6>Details</h6>
+                                <div id="animeDetails"></div>
+                            </div>
+                            <div class="mb-3">
+                                <h6>Genres</h6>
+                                <div id="animeGenres"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6>Synopsis</h6>
+                            <p id="animeSynopsis" class="mb-4"></p>
+                            
+                            <h6>Episodes</h6>
+                            <div class="episode-list" id="episodeList">
+                                <!-- Episodes will be loaded here -->
+                                <div class="text-center py-3">
+                                    <div class="loader"></div>
+                                    <p>Loading episodes...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Modal -->
+    <div class="modal fade" id="playerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="episodeTitle"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="player-container mb-3">
+                        <video id="animePlayer" controls class="w-100" style="height: 500px;"></video>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Available Qualities</h6>
+                        <div id="qualityOptions">
+                            <!-- Quality buttons will be loaded here -->
+                            <div class="text-center py-2">
+                                <div class="loader"></div>
+                                <p>Loading video options...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-play-circle-fill me-2"></i>AnimeFlix</h5>
+                    <p>Your ultimate destination for free anime streaming. Watch the latest and classic anime in high quality.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none" onclick="showHomePage()">Home</a></li>
+                        <li><a href="#" class="text-white text-decoration-none" onclick="showPopularAnime()">Popular Anime</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Legal</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white text-decoration-none">Terms of Service</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
+                        <li><a href="#" class="text-white text-decoration-none">DMCA</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">© 2023 AnimeFlix. All anime content is property of their respective owners.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // Global variables
+        let currentAnimeId = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentEpisode = null;
+        let videoPlayer = null;
+        let hls = null;
+        
+        // Initialize the site when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load popular anime initially
+            loadPopularAnime();
+            
+            // Initialize video player
+            videoPlayer = document.getElementById('animePlayer');
+            
+            // Check if HLS is supported
+            if (Hls.isSupported()) {
+                hls = new Hls();
+            }
+            
+            // Set up event listeners for modals
+            const animeDetailsModal = document.getElementById('animeDetailsModal');
+            animeDetailsModal.addEventListener('hidden.bs.modal', function() {
+                // Clear previous content when modal is closed
+                document.getElementById('episodeList').innerHTML = '';
+            });
+            
+            const playerModal = document.getElementById('playerModal');
+            playerModal.addEventListener('hidden.bs.modal', function() {
+                // Stop video when modal is closed
+                if (videoPlayer) {
+                    videoPlayer.pause();
+                    videoPlayer.src = '';
+                }
+                
+                if (hls) {
+                    hls.destroy();
+                }
+            });
+        });
+        
+        // Show home page
+        function showHomePage() {
+            document.getElementById('heroSection').style.display = 'flex';
+            document.getElementById('animeListSection').style.display = 'block';
+            loadPopularAnime();
+        }
+        
+        // Show popular anime
+        function showPopularAnime() {
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('animeListSection').style.display = 'block';
+            loadPopularAnime();
+        }
+        
+        // Search anime function
+        function searchAnime() {
+            const searchInput = document.getElementById('searchInput') || document.getElementById('heroSearchInput');
+            const query = searchInput.value.trim();
+            
+            if (query.length < 3) {
+                alert('Please enter at least 3 characters to search');
+                return;
+            }
+            
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('animeListSection').style.display = 'block';
+            
+            // Show loading state
+            const animeList = document.getElementById('animeList');
+            animeList.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="loader"></div>
+                    <p>Searching for "${query}"...</p>
+                </div>
+            `;
+            
+            // Make API request
+            fetch(`/search/${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        animeList.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <h4>${data.error}</h4>
+                                <p>No results found for "${query}"</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    if (data.results && data.results.length > 0) {
+                        displayAnimeList(data.results, `Search Results for "${query}"`);
+                    } else {
+                        animeList.innerHTML = `
+                            <div class="col-12 text-center py-5">
+                                <h4>No results found</h4>
+                                <p>Try a different search term</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    animeList.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <h4>Error loading search results</h4>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Load popular anime
+        function loadPopularAnime() {
+            // These are example anime session IDs - in a real app, you might want to fetch trending anime from your API
+            const popularAnimeIds = [
+                '90f515c0-1e1f-716b-8f3f-8c2d8a7a38d9', // Demon Slayer
+                '1d2c4a1a-4b6a-8e3d-8f3f-8c2d8a7a38d9', // Jujutsu Kaisen
+                '3e4f5g6h-7i8j-9k0l-1m2n-3o4p5q6r7s8t', // Attack on Titan
+                '9a8b7c6d-5e4f-3g2h-1i0j-9k8l7m6n5o4p', // My Hero Academia
+                '2b3c4d5e-6f7g-8h9i-0j1k-2l3m4n5o6p7q'  // One Piece
+            ];
+            
+            // Show loading state
+            const animeList = document.getElementById('animeList');
+            animeList.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="loader"></div>
+                    <p>Loading popular anime...</p>
+                </div>
+            `;
+            
+            // Fetch details for each popular anime
+            const animePromises = popularAnimeIds.map(id => {
+                return fetch(`/anime/${id}`)
+                    .then(response => response.json())
+                    .catch(error => null); // Ignore errors for individual anime
+            });
+            
+            Promise.all(animePromises)
+                .then(results => {
+                    const validAnime = results.filter(anime => anime && !anime.error);
+                    displayAnimeList(validAnime, 'Popular Anime');
+                })
+                .catch(error => {
+                    animeList.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <h4>Error loading anime</h4>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Display anime list
+        function displayAnimeList(animeList, title = 'Anime List') {
+            const animeListSection = document.getElementById('animeList');
+            
+            // Update section title
+            document.querySelector('#animeListSection h2').textContent = title;
+            
+            if (!animeList || animeList.length === 0) {
+                animeListSection.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <h4>No anime found</h4>
+                        <p>Try again later</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Create anime cards
+            animeListSection.innerHTML = animeList.map(anime => `
+                <div class="col-lg-3 col-md-4 col-sm-6 col-12">
+                    <div class="anime-card" onclick="showAnimeDetails('${anime.session_id}')">
+                        <img src="${anime.poster}" class="card-img-top" alt="${anime.title}">
+                        <div class="card-body">
+                            <h5 class="card-title">${anime.title}</h5>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-secondary">${anime.type || 'TV'}</span>
+                                <span class="text-muted small">${anime.episodes || '?'} eps</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Show anime details
+        function showAnimeDetails(sessionId) {
+            currentAnimeId = sessionId;
+            currentPage = 1;
+            
+            // Show loading state in modal
+            const modal = document.getElementById('animeDetailsModal');
+            const modalTitle = document.getElementById('animeTitle');
+            const modalPoster = document.getElementById('animePoster');
+            const modalSynopsis = document.getElementById('animeSynopsis');
+            const modalDetails = document.getElementById('animeDetails');
+            const modalGenres = document.getElementById('animeGenres');
+            const episodeList = document.getElementById('episodeList');
+            
+            modalTitle.textContent = 'Loading...';
+            modalPoster.src = '';
+            modalSynopsis.textContent = 'Loading...';
+            modalDetails.innerHTML = '';
+            modalGenres.innerHTML = '';
+            episodeList.innerHTML = `
+                <div class="text-center py-3">
+                    <div class="loader"></div>
+                    <p>Loading episodes...</p>
+                </div>
+            `;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+            
+            // Fetch anime details
+            fetch(`/anime/${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        modalTitle.textContent = 'Error';
+                        modalSynopsis.textContent = data.error;
+                        return;
+                    }
+                    
+                    // Update modal with anime details
+                    modalTitle.textContent = data.title;
+                    if (data.japanese_title) {
+                        modalTitle.textContent += ` (${data.japanese_title})`;
+                    }
+                    
+                    modalPoster.src = data.poster;
+                    modalSynopsis.textContent = data.synopsis || 'No synopsis available.';
+                    
+                    // Display anime details
+                    if (data.details) {
+                        modalDetails.innerHTML = Object.entries(data.details).map(([key, value]) => `
+                            <p class="mb-1"><strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}</p>
+                        `).join('');
+                    }
+                    
+                    // Display genres
+                    if (data.genres && data.genres.length > 0) {
+                        modalGenres.innerHTML = data.genres.map(genre => `
+                            <span class="badge bg-primary me-1 mb-1">${genre}</span>
+                        `).join('');
+                    }
+                    
+                    // Load episodes
+                    loadEpisodes(sessionId, currentPage);
+                })
+                .catch(error => {
+                    modalTitle.textContent = 'Error';
+                    modalSynopsis.textContent = `Failed to load anime details: ${error.message}`;
+                });
+        }
+        
+        // Load episodes for an anime
+        function loadEpisodes(sessionId, page = 1) {
+            const episodeList = document.getElementById('episodeList');
+            
+            fetch(`/episodes/${sessionId}/${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        episodeList.innerHTML = `
+                            <div class="alert alert-danger">
+                                ${data.error}
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    currentPage = data.current_page;
+                    totalPages = data.total_pages;
+                    
+                    // Display episodes
+                    if (data.episodes && data.episodes.length > 0) {
+                        episodeList.innerHTML = data.episodes.map(episode => `
+                            <div class="episode-item p-3" onclick="playEpisode('${episode.session}', '${episode.title}', ${episode.episode})">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Episode ${episode.episode}</strong>
+                                        ${episode.title ? `<span class="ms-2 text-muted">${episode.title}</span>` : ''}
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-secondary me-2">${episode.audio || 'Unknown'}</span>
+                                        <span class="badge bg-secondary">${episode.duration || 'Unknown'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        // Add pagination if there are multiple pages
+                        if (totalPages > 1) {
+                            const pagination = document.createElement('div');
+                            pagination.className = 'd-flex justify-content-center mt-3';
+                            
+                            if (currentPage > 1) {
+                                const prevBtn = document.createElement('button');
+                                prevBtn.className = 'btn btn-primary me-2';
+                                prevBtn.textContent = 'Previous';
+                                prevBtn.onclick = () => {
+                                    loadEpisodes(sessionId, currentPage - 1);
+                                };
+                                pagination.appendChild(prevBtn);
+                            }
+                            
+                            const pageInfo = document.createElement('span');
+                            pageInfo.className = 'align-self-center mx-3';
+                            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                            pagination.appendChild(pageInfo);
+                            
+                            if (currentPage < totalPages) {
+                                const nextBtn = document.createElement('button');
+                                nextBtn.className = 'btn btn-primary ms-2';
+                                nextBtn.textContent = 'Next';
+                                nextBtn.onclick = () => {
+                                    loadEpisodes(sessionId, currentPage + 1);
+                                };
+                                pagination.appendChild(nextBtn);
+                            }
+                            
+                            episodeList.appendChild(pagination);
+                        }
+                    } else {
+                        episodeList.innerHTML = `
+                            <div class="alert alert-info">
+                                No episodes found for this anime.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    episodeList.innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load episodes: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Play an episode
+        function playEpisode(episodeSession, episodeTitle, episodeNumber) {
+            currentEpisode = {
+                session: episodeSession,
+                title: episodeTitle,
+                number: episodeNumber
+            };
+            
+            const playerModal = document.getElementById('playerModal');
+            const modalTitle = document.getElementById('episodeTitle');
+            const qualityOptions = document.getElementById('qualityOptions');
+            
+            // Update modal title
+            modalTitle.textContent = `Episode ${episodeNumber}`;
+            if (episodeTitle) {
+                modalTitle.textContent += `: ${episodeTitle}`;
+            }
+            
+            // Show loading state for quality options
+            qualityOptions.innerHTML = `
+                <div class="text-center py-2">
+                    <div class="loader"></div>
+                    <p>Loading video options...</p>
+                </div>
+            `;
+            
+            // Show the modal
+            const bsModal = new bootstrap.Modal(playerModal);
+            bsModal.show();
+            
+            // Fetch download links
+            fetch(`/download/${currentAnimeId}/${episodeSession}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        qualityOptions.innerHTML = `
+                            <div class="alert alert-danger">
+                                ${data.error}
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    if (data.results && data.results.length > 0) {
+                        // Filter only successful results
+                        const validResults = data.results.filter(r => r.success);
+                        
+                        if (validResults.length === 0) {
+                            qualityOptions.innerHTML = `
+                                <div class="alert alert-warning">
+                                    No working video sources found for this episode.
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        // Sort by quality (highest first)
+                        validResults.sort((a, b) => {
+                            const aQuality = parseInt(a.quality.replace('p', '')) || 0;
+                            const bQuality = parseInt(b.quality.replace('p', '')) || 0;
+                            return bQuality - aQuality;
+                        });
+                        
+                        // Display quality options
+                        qualityOptions.innerHTML = `
+                            <p>Select video quality:</p>
+                            <div>
+                                ${validResults.map((result, index) => `
+                                    <button class="btn quality-btn ${index === 0 ? 'active' : ''}" 
+                                            onclick="playVideo('${result.direct_url}', '${result.quality}')">
+                                        ${result.quality}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        `;
+                        
+                        // Auto-play the highest quality
+                        if (validResults[0].direct_url) {
+                            playVideo(validResults[0].direct_url, validResults[0].quality);
+                        }
+                    } else {
+                        qualityOptions.innerHTML = `
+                            <div class="alert alert-warning">
+                                No video sources found for this episode.
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    qualityOptions.innerHTML = `
+                        <div class="alert alert-danger">
+                            Failed to load video sources: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Play video from URL
+        function playVideo(url, quality) {
+            if (!videoPlayer) return;
+            
+            // Highlight selected quality button
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show loading state
+            videoPlayer.innerHTML = 'Loading video...';
+            
+            // Check if the URL is a master m3u8 playlist
+            if (url.includes('.m3u8')) {
+                if (Hls.isSupported()) {
+                    // Destroy previous instance if exists
+                    if (hls) {
+                        hls.destroy();
+                    }
+                    
+                    hls = new Hls();
+                    hls.loadSource(url);
+                    hls.attachMedia(videoPlayer);
+                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                        videoPlayer.play();
+                    });
+                } else if (videoPlayer.canPlayType('application/vnd.apple.mpegurl')) {
+                    // For Safari
+                    videoPlayer.src = url;
+                    videoPlayer.addEventListener('loadedmetadata', function() {
+                        videoPlayer.play();
+                    });
+                } else {
+                    alert('HLS playback not supported in your browser');
+                }
+            } else {
+                // Assume it's a direct video URL
+                videoPlayer.src = url;
+                videoPlayer.play();
+            }
+        }
+    </script>
+</body>
+</html>

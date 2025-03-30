@@ -386,8 +386,8 @@
             const searchInput = document.getElementById('searchInput') || document.getElementById('heroSearchInput');
             const query = searchInput.value.trim();
             
-            if (query.length < 3) {
-                alert('Please enter at least 3 characters to search');
+            if (query.length == 0) {
+                alert('Please enter at least 1 characters to search');
                 return;
             }
             

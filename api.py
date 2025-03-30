@@ -228,16 +228,20 @@ def get_episodes(session_id, page):
         last_page = int(response["last_page"])
         total = int(response["total"])
         current_page = int(response["current_page"])
+        
         episodes = []
         
         for ep in response['data']:
+            ep_session = ep['session']
+            ep_url = f"https://animepahe.ru/play/{session_id}/{ep_session}"
             episodes.append({
                 "page": current_page,
                 "id": ep['id'],
                 "anime_id": ep['anime_id'],
                 "episode": ep['episode'],
-                "session": ep['session'],
+                "session": ep_session,
                 "title": ep['title'],
+                "episode_link": ep_url,
                 "audio": ep['audio'],
                 "duration": ep['duration'],
                 "snapshot": ep['snapshot'],

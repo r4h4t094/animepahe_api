@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import json
+import os
 
 app = Flask(__name__)
 
@@ -344,4 +345,5 @@ def extract_kwik_link(url):
         return f"Error extracting kwik link: {str(e)}"
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Get PORT from environment variable or default to 5000
+    app.run(host='0.0.0.0', port=port)  # Run on all network interfaces
